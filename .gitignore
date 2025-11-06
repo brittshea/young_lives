@@ -41,5 +41,25 @@ vignettes/*.pdf
 # pesky macOS files
 *.DS_Store
 
-# everything in the data folder
-data/*
+# everything in the data folders & data decisions document
+data/
+code/cleaning/ych_main/data_ych/
+code/cleaning/ych_main/data_decisions.R
+
+# old community data files that I'm not using
+old_community_documentation/
+code/functions/
+code/cleaning/och_main/
+code/cleaning/cvd_ych/
+code/cleaning/cvd_och/
+code/cleaning/com_main/
+code/cleaning/ych_main/old_community_analysis.R
+
+# round 2 analysis (for now)
+code/cleaning/ych_main/r2_individualanalysis_allcountries_ych.R
+
+
+
+
+
+
