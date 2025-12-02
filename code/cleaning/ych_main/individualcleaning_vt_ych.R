@@ -104,7 +104,7 @@ sub1_r1_vt_ych = r1_vt_ych %>%
                values_to = "vax_status")
 
 #save sub1_r1_vt_ych to file
-write.csv(sub1_r1_vt_ych, "./code/cleaning/ych_main/r1individualexposure_r1outcome_vt_ych.csv")
+write.csv(sub1_r1_vt_ych, "./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_vt_ych.csv")
 
 sub2_r1_vt_ych <- sub1_r1_vt_ych %>% 
   select(childid, round, commid, clustid, agechild, vax_type, vax_status, wi, chldeth, chldrel,

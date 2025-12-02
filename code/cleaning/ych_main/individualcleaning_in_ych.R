@@ -90,7 +90,7 @@ sub1_r1_in_ych = r1_in_ych %>%
                values_to = "vax_status")
 
 #save sub1_r1_in_ych to file
-write.csv(sub1_r1_in_ych, "./code/cleaning/ych_main/r1individualexposure_r1outcome_in_ych.csv")
+write.csv(sub1_r1_in_ych, "./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_in_ych.csv")
 
 sub2_r1_in_ych <- sub1_r1_in_ych %>% 
   select(childid, round, commid, clustid, agechild, vax_type, vax_status, phychnge, badevent, wi, chldeth, chldrel, 
@@ -127,7 +127,7 @@ sub1_r2_in_ych = r2_in_ych %>%
                values_to = "vax_status")
 
 #save sub1_r2_in_ych to file
-write.csv(sub1_r2_in_ych, "./code/cleaning/ych_main/r2individualexposure_r2outcome_in_ych.csv")
+write.csv(sub1_r2_in_ych, "./code/cleaning/ych_main/data_ych/r2individualexposure_r2outcome_in_ych.csv")
 
 sub2_r2_in_ych <- sub1_r2_in_ych %>% 
   select(childid, round, commid, clustid, region, agechild, vax_type, vax_status, wi, longterm)

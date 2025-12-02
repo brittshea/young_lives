@@ -1,6 +1,6 @@
 #All young lives r1 household-level exposure data with round 1 vax data
 #Author: Brittany Shea
-#Date: 11/6/25
+#Date: 12/2/25
 #Data: Huttly, S., & Jones, N. (2014). Young Lives: An International Study of Childhood Poverty 2002, Round 1 [Data set]. World Bank, Development Data Group. https://doi.org/10.48529/3CAG-R297
 
 #Load the libraries
@@ -23,11 +23,11 @@ library(qgraph)
 library(lavaan)
 library(ggeffects)
 library(broom.mixed)
+library(sjPlot)
 library(DHARMa)
 library(forcats)
 library(marginaleffects)
 library(patchwork)
-library(broom.mixed)
 
 #Format for plots
 knitr::opts_chunk$set(
@@ -49,10 +49,10 @@ scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 
 #Load the data
-r1_expandout_ind_et_ych <- read.csv("./code/cleaning/ych_main/r1individualexposure_r1outcome_et_ych.csv")
-r1_expandout_ind_in_ych <- read.csv("./code/cleaning/ych_main/r1individualexposure_r1outcome_in_ych.csv")
-r1_expandout_ind_pe_ych <- read.csv("./code/cleaning/ych_main/r1individualexposure_r1outcome_pe_ych.csv")
-r1_expandout_ind_vt_ych <- read.csv("./code/cleaning/ych_main/r1individualexposure_r1outcome_vt_ych.csv")
+r1_expandout_ind_et_ych <- read.csv("./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_et_ych.csv")
+r1_expandout_ind_in_ych <- read.csv("./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_in_ych.csv")
+r1_expandout_ind_pe_ych <- read.csv("./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_pe_ych.csv")
+r1_expandout_ind_vt_ych <- read.csv("./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_vt_ych.csv")
 
 #Combine the data by common columns
 common_columns <- Reduce(intersect, list(names(r1_expandout_ind_et_ych), names(r1_expandout_ind_in_ych), names(r1_expandout_ind_pe_ych), names(r1_expandout_ind_vt_ych)))
@@ -172,8 +172,8 @@ nd_obe_ne = r1_expandout_ind_all_ych %>%
   select(-X) %>% 
   select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, phychnge, badevent, wi_centered, agechild_centered, chldeth, chldrel, everything())
 
-#save r1 nd_obe_ne to file
-write.csv(nd_obe_ne, "./code/cleaning/ych_main/r1_nd_obe_ne.csv")
+#save r1 nd_ne_obe to file
+write.csv(nd_obe_ne, "./code/cleaning/ych_main/data_ych/r1_nd_obe_ne.csv")
 
 #create dfs for analysis
 et_nd_obe = nd_obe %>% 
@@ -227,19 +227,30 @@ vi_nd_obe_ne = nd_obe_ne %>%
 #-----------------------------------------
 #summary statistics
 
-#count unique rows for variables
-nd_ne %>% 
-  #group_by(country) %>% 
-  summarise(unique = n_distinct(childid))
+#count unique children by country
+nopolio_nd_obe_ne %>% 
+  group_by(country) %>% 
+  summarise(unique = n_distinct(commid))
+
+#count of total rows 
+nrow(nopolio_nd_obe_ne)
 
 #summary statistics
-nd_obe_ne %>% 
-  filter(country == "et") %>% 
+nopolio_nd_obe_ne %>% 
+  filter(country == "vt") %>% 
   distinct(childid, .keep_all = TRUE) %>%
   select(-vax_status, -vax_type) %>% 
   summary()
 
-nd_obe_ne %>% 
+#table of unexposed/exposed mother/child pairs and percentage exposed by country
+nopolio_nd_obe_ne %>% 
+  distinct(childid, .keep_all = TRUE) %>% 
+  count(country, exposure) %>% 
+  pivot_wider(names_from = exposure, values_from = n, values_fill = 0) %>% 
+  mutate(total = `0` + `1`,
+         pct_exposed = round(`1` / total * 100, 1))
+
+nopolio_nd_obe_ne %>% 
   filter(country == "et") %>% 
   distinct(childid, agechild) %>%
   ggplot(aes(x = agechild)) +
@@ -248,7 +259,7 @@ nd_obe_ne %>%
   ylab("Density") +
   ggtitle("Age Density Plot")
 
-nd_obe_ne %>% 
+nopolio_nd_obe_ne %>% 
   filter(country == "et") %>% 
   distinct(childid, wi) %>% 
   ggplot(aes(x = wi)) +
@@ -257,20 +268,25 @@ nd_obe_ne %>%
   ylab("Density") +
   ggtitle("Wealth Index Density Plot")
 
-#density plot for wi by commid
-nd_obe_ne %>% 
+#density plot for wi by clustid
+nopolio_nd_obe_ne %>% 
   filter(country == "et") %>% 
-  distinct(childid, commid, wi) %>% 
+  distinct(childid, clustid, wi) %>% 
   ggplot(aes(x = wi)) +
   geom_density(fill = "#440154", alpha = 0.5) +
-  facet_wrap(~ commid, scales = "free_y") +  # Free y-scales for better comparison
+  facet_wrap(~ clustid, scales = "free_y") + 
   xlab("Wealth Index") +
   ylab("Density") +
-  ggtitle("Wealth Index Density Plot by Community") +
+  ggtitle("Wealth Index Density Plot by Sentinel Site") +
   theme(strip.text = element_text(size = 8)) 
 
+#count of NA for wi
+nopolio_nd_obe_ne %>%
+  distinct(childid, .keep_all = TRUE) %>% 
+  summarise(count_na = sum(is.na(wi_centered)))
+
 #exposure proportion by clustid (sentinel site)
-nd_obe_ne %>% 
+nopolio_nd_obe_ne %>% 
   filter(country == "in") %>% 
   distinct(childid, clustid, exposure) %>%
   ggplot(aes(x = clustid, fill = factor(exposure))) +
@@ -282,30 +298,49 @@ nd_obe_ne %>%
   labs(fill = "Exposure") 
 
 #find percentage of 1's in a column (binary) by country:
-nd_obe_ne %>% 
-  filter(country == "et") %>%
+nopolio_nd_obe_ne %>% 
+  filter(country == "vt") %>%
   distinct(childid, sex) %>%
-  summarise(percent_ones = mean(sex != 1, na.rm = TRUE) * 100)
+  summarise(percent = mean(sex == 0, na.rm = TRUE) * 100)
 
 #find percentage of 1's in a column (not binary) by country:
-nd_obe_ne %>% 
+nopolio_nd_obe_ne %>% 
   filter(country == "et") %>%
   distinct(childid, head) %>%
-  summarise(percent_ones = mean(head == 1, na.rm = TRUE) * 100)
+  summarise(percent = mean(head == 1, na.rm = TRUE) * 100)
 
 #find counts/percentages of vaccinations by type and country 
-nd_obe_ne %>% 
+nopolio_nd_obe_ne %>% 
   group_by(country, vax_type, vax_status) %>%
   summarise(count = n()) %>%
   mutate(percentage = count / sum(count) * 100) %>% 
   print(n = 30)
 
+#find counts/percentages of vaccinations by country for individual vax types
+nopolio_nd_obe_ne %>%
+  filter(vax_type == "vax_measles") %>%
+  group_by(country) %>%
+  summarise(
+    filtered_count = sum(vax_status == 1, na.rm = TRUE),
+    total_count = n(),
+    percentage = round(filtered_count / total_count * 100, 1)
+  )
+
+#find total count/percentage for individual vax types
+nopolio_nd_obe_ne %>%
+  filter(vax_type == "vax_inject") %>%
+  summarise(
+    filtered_count = sum(vax_status == 1, na.rm = TRUE),
+    total_count = n(),
+    percentage = round(filtered_count / total_count * 100, 2)
+  )
+
 #find vax_status by vax_type by exposure 
-nd_obe %>%
+nopolio_nd_obe_ne %>%
   group_by(vax_type, exposure, vax_status) %>%
   summarise(count = n())
 #plot this data
-summarized_data <- nd_obe %>%
+summarized_data <- nopolio_nd_obe_ne %>%
   group_by(vax_type, exposure, vax_status) %>%
   summarise(count = n()) %>% 
   mutate(percentage = count / sum(count) * 100)
@@ -321,30 +356,8 @@ ggplot(summarized_data, aes(x = vax_type, y = count, fill = factor(vax_status)))
        fill = "Vaccination Status") +
   theme_minimal()
 
-#find vax_status by vax_type by exposure by country
-nd_obe %>%
-  group_by(country, vax_type, exposure, vax_status) %>%
-  summarise(count = n())
-#plot this data
-summarized_data <- nd_obe %>%
-  group_by(country, vax_type, exposure, vax_status) %>%
-  summarise(count = n()) %>% 
-  mutate(percentage = count / sum(count) * 100) 
-ggplot(summarized_data, aes(x = vax_type, y = count, fill = factor(vax_status))) +
-  geom_bar(stat = "identity", position = "dodge") +
-  facet_grid(factor(exposure) ~ country) +
-  coord_cartesian(clip = "off") +
-  geom_text(aes(label = paste0(round(percentage, 1), "%")), 
-            position = position_dodge(width = 0.9), vjust = -0.5) +
-  labs(title = "Vaccination Status by Vaccine Type, Natural Disaster Exposure, and Country",
-       x = "Vaccine Type",
-       y = "Count",
-       fill = "Vaccination Status") +
-  theme_minimal()
-
 #plot vax_status by vax_type (calculate percentages)
-
-df_percent <- nd_obe_ne %>%
+df_percent <- nopolio_nd_obe_ne %>%
   mutate(country = str_to_title(country)) %>% 
   group_by(country, vax_type, vax_status) %>%
   summarise(count = n()) %>% 
@@ -366,8 +379,66 @@ ggplot(df_percent, aes(x = vax_type, y = count, fill = as.factor(vax_status))) +
   theme_minimal() +
   facet_wrap(~ country, scales = "free_x")
 
-#plot all countries, wi by vaccination status for round 1
-clean_data <- nd_obe_ne %>%
+#plot percentage of phychnge by clustid
+#ensure each child is counted once per country by taking the maximum phychnge value
+clean_data <- nopolio_nd_obe_ne %>%
+  filter(country == "in") %>% 
+  group_by(clustid, childid) %>%
+  summarise(exposure = max(as.character(exposure))) %>%
+  ungroup()
+#calculate the percentage by clustid
+clean_data <- clean_data %>%
+  group_by(clustid, exposure) %>%
+  summarize(count = n()) %>%
+  mutate(total = sum(count),
+         percentage = count / total) %>%
+  ungroup()
+#create bar plot
+ggplot(clean_data, aes(x = factor(clustid), y = percentage, fill = factor(exposure))) +
+  geom_bar(stat = "identity", position = "dodge", color = "NA") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_viridis_d(labels = c("0" = "Unexposed", "1" = "Exposed")) +
+    theme(axis.text = element_text(size = 16), legend.text = element_text(size = 16)) +
+  labs(title = "",
+       x = "Sentinel Site",
+       y = "Percentage",
+       fill = "Natural disaster exposure") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+#plot percentage of phychnge by country
+clean_data <- nopolio_nd_obe_ne %>%
+  group_by(country, childid) %>%
+  summarise(exposure = max(as.character(exposure))) %>%
+  ungroup()
+#calculate the percentage by clustid
+clean_data <- clean_data %>%
+  group_by(country, exposure) %>%
+  summarize(count = n()) %>%
+  mutate(total = sum(count),
+         percentage = count / total) %>%
+  ungroup()
+#create bar plot
+ggplot(clean_data, aes(x = factor(country), y = percentage, fill = factor(exposure))) +
+  geom_bar(stat = "identity", position = "dodge", color = "NA") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_viridis_d(labels = c("0" = "Unexposed", "1" = "Exposed")) +
+  theme(axis.text = element_text(size = 16), legend.text = element_text(size = 16)) +
+  labs(title = "",
+       x = "Country",
+       y = "Percentage",
+       fill = "Natural disaster exposure") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+#plot counts for vax_type by vax_status and exposure:
+filtered_data <- nopolio_nd_obe_ne[nopolio_nd_obe_ne$vax_status == 1 & nopolio_nd_obe_ne$exposure == 1, ]
+ggplot(filtered_data, aes(x = vax_type)) +
+  geom_bar() +
+  labs(x = "vax_type", y = "Count", title = "Counts by vax_type")
+
+#plot wi by vaccination status for round 1
+clean_data <- nopolio_nd_obe_ne %>%
   drop_na(wi)
 #create histogram plot
 ggplot(clean_data, aes(x = wi, fill = factor(vax_status))) +
@@ -380,58 +451,6 @@ ggplot(clean_data, aes(x = wi, fill = factor(vax_status))) +
        fill = "Vaccination status") +
   theme_minimal() +
   theme(legend.position = "bottom")
-
-#plot percentage of phychnge by country
-#clean the data by dropping rows with NA values in country and phychnge
-clean_data <- nd_obe_ne %>%
-  mutate(country = str_to_title(country)) %>% 
-  drop_na(country)
-#ensure each child is counted once per country by taking the maximum phychnge value
-clean_data <- clean_data %>%
-  group_by(country, childid) %>%
-  summarise(exposure = max(as.character(exposure))) %>%
-  ungroup()
-#calculate the percentage by country
-clean_data <- clean_data %>%
-  group_by(country, exposure) %>%
-  summarize(count = n()) %>%
-  mutate(total = sum(count),
-         percentage = count / total) %>%
-  ungroup()
-#create bar plot
-ggplot(clean_data, aes(x = factor(country), y = percentage, fill = factor(exposure))) +
-  geom_bar(stat = "identity", position = "dodge", color = "NA") +
-  scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(values = c("0" = "green4", "1" = "darkorange1"), labels = c("0" = "Unexposed", "1" = "Exposed")) +
-  theme(axis.text = element_text(size = 16), legend.text = element_text(size = 16)) +
-  labs(title = "Natural disaster exposure reported by households by country",
-       x = "Country",
-       y = "Percentage",
-       fill = "Natural disaster exposure") +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-
-#plot counts for vax_type by vax_status and exposure:
-filtered_data <- nd_obe_ne[nd_obe_ne$vax_status == 1 & nd_obe_ne$exposure == 1, ]
-ggplot(filtered_data, aes(x = vax_type)) +
-  geom_bar() +
-  labs(x = "vax_type", y = "Count", title = "Counts by vax_type")
-
-#check india data: # of children per commid; # of 0s and 1s per vax type
-in_nd_obe_ne %>%
-  group_by(commid) %>%
-  summarise(num_children = n_distinct(childid))
-
-in_nd_obe_ne %>%
-  count(vax_type, vax_status)
-
-in_nd_obe_ne %>%
-  count(vax_type, vax_status) %>%
-  ggplot(aes(x = vax_type, y = n, fill = vax_status)) +
-  geom_col(position = "dodge") +
-  labs(title = "Count by vax_type and vax_status", 
-       x = "vax_type", 
-       y = "Count")
 
 #----------------------------------------
 #run models for all vaccination and countries combined: nd_obe, nd_ne, nd_obe_ne
@@ -515,7 +534,7 @@ testOutliers(sim_res)
 #nd_obe
 
 model_d <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered + 
-                   (1 | country/region/commid/childid) ,
+                   (1 | country/region/clustid/childid) ,
                  data = nopolio_nd_obe, family = binomial, nAGQ = 1, 
                  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
 
@@ -530,37 +549,32 @@ plot(sim_res)
 testDispersion(sim_res)
 testOutliers(sim_res)
 
-#calculate the combined effects for interaction 
-#create table with interaction effects summarized for all countries
-effect_estimates <- fixef(model_d)
-print(effect_estimates)
+#compute average predicted outcome for each combination of exposure & moderator 
+avg_predictions(model_d, by = c("exposure", "vax_type"))
 
-#extract coefficients
-ee_exposure1 <- 
-ee_interaction_bcg <- 
-ee_interaction_measles <- 
+#plot "average predicted probability that Y=1 for different values of moderator & exposure"
+plot_predictions(model_d, by = c("vax_type", "exposure"))
 
-#calculate combined effects
-#for the reference category
-ee_reference <- ee_exposure1
+#compute average counterfactual comparison
+avg_comparisons(model_d, variables = "exposure")
 
-#for vax_typevax_inject
-ee_bcg <- ee_exposure1 + ee_interaction_bcg
+#check for heterogeneity to see if effect of X on Y depends on Moderator 
+avg_comparisons(model_d, variables = "exposure", by = "vax_type")
 
-#for vax_typevax_measles
-ee_measles <- ee_exposure1 + ee_interaction_measles
+#are the differences btw moderator groups statistically significant? 
+avg_comparisons(model_d,
+                variables = "exposure",
+                by = "vax_type",
+                hypothesis = "b3 - b1 = 0")
 
-# Create a data frame to summarize the effects
-interaction_effects <- data.frame(
-  vax_type = c("Reference (2+ Prenatal Tetanus)", "BCG", "Measles"),
-  Combined_Effect = c(ee_reference, ee_bcg, ee_measles)
-)
-print(interaction_effects)
+#get marginal effects for covariates
+avg_slopes(model_d, variables = "agechild_centered")
+avg_slopes(model_d, variables = "wi_centered")
 
 #nd_ne
 
 model_e <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered +
-                   (1 | country/region/commid/childid),
+                   (1 | country/region/clustid/childid),
                  data = nopolio_nd_ne, family = binomial, nAGQ = 1, 
                  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
 
@@ -584,60 +598,32 @@ avg_predictions(model_e, by = c("exposure", "vax_type"))
 plot_predictions(model_e, by = c("vax_type", "exposure"))
 
 #compute average counterfactual comparison ("on average, moving from 0 to 1 on 
-#   the exposure (X) variable is associated with an increase/decrease of ... on the outcome scale)
-#a significant, positive estimate means the exposed group (X = 1) has a higher predicted 
-#   probability of the outcome compared to the unexposed group (X = 0)
 avg_comparisons(model_e, variables = "exposure")
 
 #check for heterogeneity to see if effect of X on Y depends on Moderator 
-#on average, moving from the control (x=0) to the treatment group (x=1) is associated
-#   with an increase of x percentage points for individuals in category 1. The average
-#   estimated effect of x for individuals in category 2 is x percentage points.
 avg_comparisons(model_e, variables = "exposure", by = "vax_type")
 
 #are the differences btw moderator groups statistically significant? 
-#The difference btw the average estimated effect of X in categories 3 and 1 is b3-b1 & statistically significant
 avg_comparisons(model_e,
                 variables = "exposure",
                 by = "vax_type",
                 hypothesis = "b3 - b1 = 0")
 
-#calculate the combined effects for interaction
-
-#create table with interaction effects summarized for all countries
-effect_estimates <- fixef(model_e)
-print(effect_estimates)
-
-#extract coefficients
-ee_exposure1 <- 
-ee_interaction_bcg <-  
-ee_interaction_measles <-  
-
-#calculate combined effects
-#for the reference category
-ee_reference <- ee_exposure1
-
-#for vax_typevax_inject
-ee_bcg <- ee_exposure1 + ee_interaction_bcg
-
-#for vax_typevax_measles
-ee_measles <- ee_exposure1 + ee_interaction_measles
-
-# Create a data frame to summarize the effects
-interaction_effects <- data.frame(
-  vax_type = c("Reference (2+ Prenatal Tetanus)", "BCG", "Measles"),
-  Combined_Effect = c(ee_reference, ee_bcg, ee_measles)
-)
-print(interaction_effects)
+#get marginal effects for covariates
+avg_slopes(model_e, variables = "agechild_centered")
+avg_slopes(model_e, variables = "wi_centered")
 
 #nd_ne_obe
 
 model_f <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered +
-                   (1 | country/region/clustid/childid) ,
+                   (1 | country/region/clustid/childid),
                  data = nopolio_nd_obe_ne, family = binomial, nAGQ = 1, 
                  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
 
 summary(model_f)
+
+#sjplot for OR, CI, p-value, and random effects
+tab_model(model_f)
 
 #AIC to check model fit
 AIC(model_f)
@@ -647,6 +633,54 @@ sim_res <- simulateResiduals(model_f)
 plot(sim_res)
 testDispersion(sim_res)
 testOutliers(sim_res)
+
+#compute average predicted outcome for each combination of exposure & moderator 
+avg_predictions(model_f, by = c("exposure", "vax_type"))
+
+#plot "average predicted probability that Y=1 for different values of moderator & exposure"
+plot_predictions(model_f, by = c("vax_type", "exposure")) +
+labs(y = "Predicted Probability", x = "Vaccine Type") +
+  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
+                              "vax_bcg" = "BCG", 
+                              "vax_measles" = "Measles")) +
+  theme(text = element_text(size = 14)) +
+  aes(color = exposure) + 
+  scale_color_brewer(type = "qual", palette = "Set2")
+
+#compute average counterfactual comparison
+avg_comparisons(model_f, variables = "exposure")
+
+#Find average marginal effects, i.e. the comparison between exposure = 1 vs exposure = 0)
+#it's the average percentage‑point differences in the predicted probability of the outcome between exposed and unexposed, calculated separately within each level of the moderator.
+#checks for heterogeneity to see if effect of X on Y depends on Moderator 
+avg_comparisons(model_f, variables = "exposure", by = "vax_type")
+
+#plot marginal effects 
+plot_comparisons(model_f, variables = "exposure", by = "vax_type") +
+  labs(y = "Marginal Effect", x = "Vaccine Type") +
+  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
+                              "vax_bcg" = "BCG", 
+                              "vax_measles" = "Measles")) +
+  theme(text = element_text(size = 14)) +
+  aes(color = vax_type) + 
+  scale_color_brewer(type = "qual", palette = "Dark2")
+
+#forest plot marginal effects
+comps <- avg_comparisons(model_f, variables = "exposure", by = "vax_type")
+ggplot(comps, aes(y = vax_type, x = estimate)) +
+  geom_point() +
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high)) 
+
+#are the differences btw moderator groups statistically significant? 
+avg_comparisons(model_f,
+                variables = "exposure",
+                by = "vax_type",
+                hypothesis = "b3 - b2 = 0")
+
+#get marginal effects for covariates
+avg_slopes(model_f, variables = "agechild_centered")
+avg_slopes(model_f, variables = "wi_centered")
+
 
 #calculate the combined effects for interaction
 
@@ -760,19 +794,12 @@ avg_predictions(model_j, by = c("exposure", "vax_type"))
 plot_predictions(model_j, by = c("vax_type", "exposure"))
 
 #compute average counterfactual comparison ("on average, moving from 0 to 1 on 
-#   the exposure (X) variable is associated with an increase/decrease of ... on the outcome scale)
-#a significant, positive estimate means the exposed group (X = 1) has a higher predicted 
-#   probability of the outcome compared to the unexposed group (X = 0)
 avg_comparisons(model_j, variables = "exposure")
 
 #check for heterogeneity to see if effect of X on Y depends on Moderator 
-#on average, moving from the control (x=0) to the treatment group (x=1) is associated
-#   with an increase of x percentage points for individuals in category 1. The average
-#   estimated effect of x for individuals in category 2 is x percentage points.
 avg_comparisons(model_j, variables = "exposure", by = "vax_type")
 
 #are the differences btw moderator groups statistically significant? 
-#The difference btw the average estimated effect of X in categories 3 and 1 is b3-b1 & statistically significant
 avg_comparisons(model_j,
                 variables = "exposure",
                 by = "vax_type",
@@ -813,6 +840,24 @@ sim_res <- simulateResiduals(model_l)
 plot(sim_res)
 testDispersion(sim_res)
 testOutliers(sim_res)
+
+#compute average predicted outcome for each combination of exposure & moderator 
+avg_predictions(model_l, by = c("exposure", "vax_type"))
+
+#plot "average predicted probability that Y=1 for different values of moderator & exposure"
+plot_predictions(model_l, by = c("vax_type", "exposure"))
+
+#compute average counterfactual comparison ("on average, moving from 0 to 1 on 
+avg_comparisons(model_l, variables = "exposure")
+
+#check for heterogeneity to see if effect of X on Y depends on Moderator 
+avg_comparisons(model_l, variables = "exposure", by = "vax_type")
+
+#are the differences btw moderator groups statistically significant? 
+avg_comparisons(model_l,
+                variables = "exposure",
+                by = "vax_type",
+                hypothesis = "b3 - b1 = 0")
 
 #india
 
@@ -895,19 +940,12 @@ avg_predictions(model_p, by = c("exposure", "vax_type"))
 plot_predictions(model_p, by = c("vax_type", "exposure"))
 
 #compute average counterfactual comparison ("on average, moving from 0 to 1 on 
-#   the exposure (X) variable is associated with an increase/decrease of ... on the outcome scale)
-#a significant, positive estimate means the exposed group (X = 1) has a higher predicted 
-#   probability of the outcome compared to the unexposed group (X = 0)
 avg_comparisons(model_p, variables = "exposure")
 
 #check for heterogeneity to see if effect of X on Y depends on Moderator 
-#on average, moving from the control (x=0) to the treatment group (x=1) is associated
-#   with an increase of x percentage points for individuals in category 1. The average
-#   estimated effect of x for individuals in category 2 is x percentage points.
 avg_comparisons(model_p, variables = "exposure", by = "vax_type")
 
 #are the differences btw moderator groups statistically significant? 
-#The difference btw the average estimated effect of X in categories 3 and 1 is b3-b1 & statistically significant
 avg_comparisons(model_p,
                 variables = "exposure",
                 by = "vax_type",
@@ -933,7 +971,7 @@ testOutliers(sim_res)
 
 #interaction nd_obe_ne
 
-model_r <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered + chldeth +
+model_r <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered +
                    (1 | commid),
                  data = in_nd_obe_ne, family = binomial, nAGQ = 1, 
                  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
@@ -948,6 +986,24 @@ sim_res <- simulateResiduals(model_r)
 plot(sim_res)
 testDispersion(sim_res)
 testOutliers(sim_res)
+
+#compute average predicted outcome for each combination of exposure & moderator 
+avg_predictions(model_r, by = c("exposure", "vax_type"))
+
+#plot "average predicted probability that Y=1 for different values of moderator & exposure"
+plot_predictions(model_r, by = c("vax_type", "exposure"))
+
+#compute average counterfactual comparison ("on average, moving from 0 to 1 on 
+avg_comparisons(model_r, variables = "exposure")
+
+#check for heterogeneity to see if effect of X on Y depends on Moderator 
+avg_comparisons(model_r, variables = "exposure", by = "vax_type")
+
+#are the differences btw moderator groups statistically significant? 
+avg_comparisons(model_r,
+                variables = "exposure",
+                by = "vax_type",
+                hypothesis = "b3 - b1 = 0")
 
 #vietnam
 
@@ -986,31 +1042,6 @@ sim_res <- simulateResiduals(model_t)
 plot(sim_res)
 testDispersion(sim_res)
 testOutliers(sim_res)
-
-#calculate the combined effects for interaction
-
-#create table with interaction effects 
-effect_estimates <- fixef(model_t)
-print(effect_estimates)
-
-#extract coefficients
-ee_exposure1 <- 
-ee_interaction_measles <-  
-
-#calculate combined effects
-#for the reference category
-ee_reference <- ee_exposure1
-
-#for vax_typevax_measles
-ee_measles <- ee_exposure1 + ee_interaction_measles
-
-# Create a data frame to summarize the effects
-interaction_effects <- data.frame(
-  vax_type = c("Reference (2+ Prenatal Tetanus)", "Measles"),
-  Combined_Effect = c(ee_reference, ee_measles)
-)
-print(interaction_effects)
-
 
 #nd_ne
 
@@ -1055,51 +1086,16 @@ avg_predictions(model_v, by = c("exposure", "vax_type"))
 plot_predictions(model_v, by = c("vax_type", "exposure"))
 
 #compute average counterfactual comparison ("on average, moving from 0 to 1 on 
-#   the exposure (X) variable is associated with an increase/decrease of ... on the outcome scale)
-#a significant, positive estimate means the exposed group (X = 1) has a higher predicted 
-#   probability of the outcome compared to the unexposed group (X = 0)
 avg_comparisons(model_v, variables = "exposure")
 
 #check for heterogeneity to see if effect of X on Y depends on Moderator 
-#on average, moving from the control (x=0) to the treatment group (x=1) is associated
-#   with an increase of x percentage points for individuals in category 1. The average
-#   estimated effect of x for individuals in category 2 is x percentage points.
 avg_comparisons(model_v, variables = "exposure", by = "vax_type")
 
 #are the differences btw moderator groups statistically significant? 
-#The difference btw the average estimated effect of X in categories 3 and 1 is b3-b1 & statistically significant
 avg_comparisons(model_v,
                 variables = "exposure",
                 by = "vax_type",
                 hypothesis = "b3 - b1 = 0")
-
-#calculate the combined effects for interaction
-
-#create table with interaction effects 
-effect_estimates <- fixef(model_v)
-print(effect_estimates)
-
-#extract coefficients
-ee_exposure1 <- 
-ee_interaction_bcg <- 
-ee_interaction_measles <-  
-
-#calculate combined effects
-#for the reference category
-ee_reference <- ee_exposure1
-
-#for vax_typevax_bcg
-ee_bcg <- ee_exposure1 + ee_interaction_bcg
-
-#for vax_typevax_measles
-ee_measles <- ee_exposure1 + ee_interaction_measles
-
-# Create a data frame to summarize the effects
-interaction_effects <- data.frame(
-  vax_type = c("Reference (2+ Prenatal Tetanus)", "BCG", "Measles"),
-  Combined_Effect = c(ee_reference, ee_bcg, ee_measles)
-)
-print(interaction_effects)
 
 #nd_obe_ne
 
@@ -1137,29 +1133,23 @@ plot(sim_res)
 testDispersion(sim_res)
 testOutliers(sim_res)
 
-#calculate the combined effects for interaction
+#compute average predicted outcome for each combination of exposure & moderator 
+avg_predictions(model_x, by = c("exposure", "vax_type"))
 
-#create table with interaction effects 
-effect_estimates <- fixef(model_x)
-print(effect_estimates)
+#plot "average predicted probability that Y=1 for different values of moderator & exposure"
+plot_predictions(model_x, by = c("vax_type", "exposure"))
 
-#extract coefficients
-ee_exposure1 <- 
-ee_interaction_measles <-  
+#compute average counterfactual comparison ("on average, moving from 0 to 1 on 
+avg_comparisons(model_x, variables = "exposure")
 
-#calculate combined effects
-#for the reference category
-ee_reference <- ee_exposure1
+#check for heterogeneity to see if effect of X on Y depends on Moderator 
+avg_comparisons(model_x, variables = "exposure", by = "vax_type")
 
-#for vax_typevax_measles
-ee_measles <- ee_exposure1 + ee_interaction_measles
-
-# Create a data frame to summarize the effects
-interaction_effects <- data.frame(
-  vax_type = c("Reference (2+ Prenatal Tetanus)", "Measles"),
-  Combined_Effect = c(ee_reference, ee_measles)
-)
-print(interaction_effects)
+#are the differences btw moderator groups statistically significant? 
+avg_comparisons(model_x,
+                variables = "exposure",
+                by = "vax_type",
+                hypothesis = "b3 - b1 = 0")
 
 #----------------------------------------
 #run models for each vaccination type individually & all countries combined: nd_obe/nd_ne/nd_obe_ne

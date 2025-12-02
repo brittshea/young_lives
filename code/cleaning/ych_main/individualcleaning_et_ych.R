@@ -1,6 +1,6 @@
 # File: Ethiopia main younger children survey r1 & r2 
 # Author: Brittany Shea
-# Date: 1-24-25
+# Date: 11-15-25
 
 #-------------------------
 
@@ -94,7 +94,7 @@ sub1_r1_et_ych = r1_et_ych %>%
                values_to = "vax_status")
 
 #save sub1_r1_et_ych to file
-write.csv(sub1_r1_et_ych, "./code/cleaning/ych_main/r1individualexposure_r1outcome_et_ych.csv")
+write.csv(sub1_r1_et_ych, "./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_et_ych.csv")
 
 #---------------------------------------
 #sub-analysis to look at other bad events (obe)
@@ -137,7 +137,7 @@ obe_r1_et_ych <- r1_et_ych %>%
                values_to = "vax_status")
 
 #save obe_r1_et_ych to file
-write.csv(obe_r1_et_ych, "./code/cleaning/ych_main/obe_et_ych.csv")
+write.csv(obe_r1_et_ych, "./code/cleaning/ych_main/data_ych/obe_et_ych.csv")
 
 #plot percentage of individuals exposed to obe types
 obe_r1_et_ych %>%
