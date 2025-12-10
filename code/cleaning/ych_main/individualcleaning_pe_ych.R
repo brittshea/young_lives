@@ -37,7 +37,7 @@ r2_pe_ych = read_dta("./data/raw/ych_main/r2_pe_ych.dta")
 #clean round 1 child data; filtered timelive >= 3
 sub1_r1_pe_ych = r1_pe_ych %>% 
   select(agechild, childid, placeid, clustid, region, timelive, bio1, relcare, head, 
-         longterm, chldeth, chldrel, sex, caredep, badevent, phychnge, worsevnt, wi, inject, bcg, polio, 
+         longterm, chldeth, chldrel, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, inject, bcg, polio, 
          measles) %>% 
   mutate(round = 1) %>%
   mutate(measles = ifelse(agechild <= 12, NA_real_, measles)) %>%
@@ -45,9 +45,12 @@ sub1_r1_pe_ych = r1_pe_ych %>%
   rename(commid = placeid) %>% 
   mutate(sex = as.numeric(sex)) %>% 
   mutate(sex = ifelse(sex == 1, 1,0)) %>% #0=female; 1=male
+  mutate(antnata = as.numeric(antnata)) %>% 
+  mutate(antnata = ifelse(antnata == 1, 1,0)) %>% 
   mutate(inject = as.numeric(inject)) %>% 
   rename(vax_inject = inject) %>% 
   mutate(vax_inject = ifelse(vax_inject == 1, 1,0)) %>% 
+  mutate(vax_inject = if_else(antnata == 0, 0, vax_inject)) %>% 
   mutate(bcg = as.numeric(bcg)) %>% 
   rename(vax_bcg = bcg) %>% 
   mutate(vax_bcg = ifelse(vax_bcg == 1, 1,0)) %>% 
