@@ -32,11 +32,12 @@ r2_vt_ych = read_dta("./data/raw/ych_main/r2_vt_ych.dta")
 #-------------------------
 #Round 1
 #-------------------------
+#clean round 1 child data; filtered timelive >= 3; if antnata = 0, vax_inject = 0; 
+#filter agechild for measles
 
-#clean round 1 child data; filtered timelive >= 3
 sub1_r1_vt_ych = r1_vt_ych %>% 
   select(agechild, CHILDID, COMMID, CLUSTID, REGION, TIMELIVE, BIO1, HEAD,
-         LONGTERM, CHLDETH, CHLDREL, SEX, caredep, RELCARE, BADEVENT, WORSEVNT, PHYCHNGE, wi, ANTNATA, INJECT, BCG, 
+         LONGTERM, SEX, caredep, RELCARE, BADEVENT, WORSEVNT, PHYCHNGE, wi, ANTNATA, INJECT, BCG, 
          MEASLES) %>% 
   mutate(round = 1) %>%
   mutate(across(where(is.character), tolower)) %>%
@@ -79,26 +80,6 @@ sub1_r1_vt_ych = r1_vt_ych %>%
   mutate(phychnge = ifelse(phychnge == 1, 1,0)) %>%
   mutate(head = as.numeric(head)) %>% 
   mutate(caredep = as.numeric(caredep)) %>%
-  mutate(chldrel = case_when(
-    chldrel == 1 ~ "christian",
-    chldrel == 3 ~ "buddhist",
-    chldrel == 6 ~ "protestant",
-    chldrel == 11 ~ "ancestor worship",
-    chldrel == 13 ~ "cao dai",
-    chldrel == 14 ~ "none",
-    chldrel == 15 ~ "other",
-    chldrel == 99 ~ NA_character_,
-    TRUE ~ as.character(chldrel))) %>% 
-  mutate(chldeth = case_when(
-    chldeth == 10 ~ "other",
-    chldeth == 41 ~ "kinh",
-    chldeth == 42 ~ "h'mong",
-    chldeth == 44 ~ "ede",
-    chldeth == 45 ~ "ba na",
-    chldeth == 46 ~ "nung",
-    chldeth == 47 ~ "tay",
-    chldeth == 48 ~ "dao",
-    TRUE ~ as.character(chldeth))) %>% 
   mutate(commid = str_replace(commid, "^vn", "vt")) %>%
   mutate(childid = str_replace(childid, "^vn", "vt")) %>%
   filter(!is.na(vax_inject) | !is.na(vax_bcg) | !is.na(vax_measles)) %>% 
@@ -108,7 +89,3 @@ sub1_r1_vt_ych = r1_vt_ych %>%
 
 #save sub1_r1_vt_ych to file
 write.csv(sub1_r1_vt_ych, "./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_vt_ych.csv")
-
-sub2_r1_vt_ych <- sub1_r1_vt_ych %>% 
-  select(childid, round, commid, clustid, agechild, vax_type, vax_status, wi, chldeth, chldrel,
-         longterm, caredep, head, relcare, badevent, phychnge)

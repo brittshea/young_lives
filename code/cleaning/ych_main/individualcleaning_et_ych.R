@@ -1,6 +1,6 @@
 # File: Ethiopia main younger children survey r1 & r2 
 # Author: Brittany Shea
-# Date: 11-15-25
+# Date: 12-11-25
 
 #-------------------------
 
@@ -33,11 +33,12 @@ r2_et_ych = read_dta("./data/raw/ych_main/r2_et_ych.dta")
 #Round 1
 #-------------------------
 
-#clean round 1 child data; filtered timelive >= 3
+#clean round 1 child data; filter timelive >= 3; if antnata = 0, vax_inject = 0; 
+#filter agechild for measles
 
 sub1_r1_et_ych = r1_et_ych %>% 
   select(agechild, childid, commid, clustid, region, timelive, bio1, relcare, head,
-         longterm, chldeth, chldrel, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, inject, bcg, 
+         longterm, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, inject, bcg, 
          measles) %>% 
   mutate(round = 1) %>%
   mutate(across(where(is.character), tolower)) %>%
@@ -69,28 +70,6 @@ sub1_r1_et_ych = r1_et_ych %>%
   mutate(head = as.numeric(head)) %>% 
   mutate(caredep = as.numeric(caredep)) %>%
   mutate(phychnge = ifelse(phychnge == 1, 1,0)) %>%
-  mutate(chldeth = case_when(
-    chldeth == 10 ~ "other",
-    chldeth == 11 ~ "agew",
-    chldeth == 12 ~ "amhara",
-    chldeth == 13 ~ "gurage",
-    chldeth == 14 ~ "hadiva",
-    chldeth == 15 ~ "kambata",
-    chldeth == 16 ~ "oromo",
-    chldeth == 17 ~ "sidama",
-    chldeth == 18 ~ "tigrian",
-    chldeth == 19 ~ "wolavta",
-    chldeth == NA ~ NA_character_,
-    TRUE ~ as.character(chldeth))) %>% 
-  mutate(chldrel = case_when(
-    chldrel == 2 ~ "muslim",
-    chldrel == 5 ~ "catholic",
-    chldrel == 6 ~ "protestant",
-    chldrel == 7 ~ "orthodox",
-    chldrel == 9 ~ "evangelist",
-    chldrel == 15 ~ "other",
-    chldrel == NA ~ NA_character_,
-    TRUE ~ as.character(chldrel))) %>% 
   filter(!is.na(vax_inject) | !is.na(vax_bcg) | !is.na(vax_measles)) %>% 
   pivot_longer(cols = starts_with("vax"), 
                names_to = "vax_type", 

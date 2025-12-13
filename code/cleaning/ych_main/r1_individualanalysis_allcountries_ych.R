@@ -5,8 +5,8 @@
 
 #WHERE I LEFT OFF: added line to individualcleaning country files for antnata/vax_inject = 0;
 #need to remove that line if i want to run code without antnata for nd_obe_ne etc. dfs
-
 ####If biomum not present, caregiver respondent for antnata & inject
+####If biomum not present, caregiver is respondent for antnata & inject
 ####If respondent not biomum, NA for antnata and vax_inject
 ####If vax_inject not known, NA (et,in, pe) or NK (vt)
 
@@ -71,46 +71,10 @@ r1_expandout_ind_all_ych <- rbind(r1_expandout_ind_et_ych[, common_columns],
 
 #create df to examine effect of exposure to natural disaster (ND) v. other bad event (OBE); 
 #convert categorical variables to factors; mean center agechild & wi
-nd_obe <- r1_expandout_ind_all_ych %>%
-  mutate(country = substr(childid, 1, 2)) %>% 
-  mutate(clustid = paste(country, clustid, sep = "_")) %>% 
-  mutate(chldeth = if_else(is.na(chldeth), chldeth, paste(country, chldeth, sep = "_"))) %>% 
-  mutate(chldrel = if_else(is.na(chldrel), chldrel, paste(country, chldrel, sep = "_"))) %>% 
-  mutate(region = if_else(is.na(region), as.character(region), paste(country, region, sep = "_"))) %>% 
-  mutate(exposure = case_when(
-    badevent == 1 & phychnge == 1 ~ 1,
-    badevent == 1 & (phychnge == 0 | is.na(phychnge)) ~ 0,
-    TRUE ~ NA_real_
-  )) %>% 
-  mutate(agechild_centered = agechild - mean(agechild, na.rm = TRUE)) %>% 
-  mutate(wi_centered = wi - mean(wi, na.rm = TRUE)) %>% 
-  mutate(
-    round = as.factor(round),
-    country = as.factor(country),
-    childid = as.factor(childid),
-    commid = as.factor(commid),
-    badevent = as.factor(badevent),
-    phychnge = as.factor(phychnge),
-    exposure = as.factor(exposure),
-    vax_status = as.factor(vax_status),
-    vax_type = as.factor(vax_type),
-    chldeth = as.factor(chldeth),
-    sex = as.factor(sex),
-    region = as.factor(region),
-    caredep = as.factor(caredep),
-    chldrel = as.factor(chldrel),
-    clustid = as.factor(clustid)) %>% 
-  filter(!is.na(vax_status)) %>%
-  filter(!is.na(exposure)) %>% 
-  select(-X) %>% 
-  select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, phychnge, badevent, wi_centered, agechild_centered, chldeth, chldrel, everything())
 
-#######NEW CODE CHUNK TO TEST ANTENATAL
-test00 = r1_expandout_ind_all_ych %>% 
+nd_obe = r1_expandout_ind_all_ych %>% 
   mutate(country = substr(childid, 1, 2)) %>% 
   mutate(clustid = paste(country, clustid, sep = "_")) %>% 
-  mutate(chldeth = if_else(is.na(chldeth), chldeth, paste(country, chldeth, sep = "_"))) %>% 
-  mutate(chldrel = if_else(is.na(chldrel), chldrel, paste(country, chldrel, sep = "_"))) %>% 
   mutate(region = if_else(is.na(region), as.character(region), paste(country, region, sep = "_"))) %>% 
   mutate(exposure = case_when(
     badevent == 1 & phychnge == 1 ~ 1,
@@ -130,58 +94,18 @@ test00 = r1_expandout_ind_all_ych %>%
     sex = as.factor(sex),
     vax_type = as.factor(vax_type),
     vax_status = as.factor(vax_status), 
-    chldeth = as.factor(chldeth),
     region = as.factor(region),
     caredep = as.factor(caredep),
-    chldrel = as.factor(chldrel),
     clustid = as.factor(clustid)) %>%
   filter(!is.na(exposure)) %>% 
   select(-X) %>% 
-  select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, phychnge, badevent, wi_centered, agechild_centered, chldeth, chldrel, everything())
-#######
+  select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, antnata, phychnge, badevent, wi_centered, agechild_centered, everything())
 
 #create df to examine effect of exposure to natural disaster (ND) v. no event (NE); 
 #convert categorical variables to factors; mean center agechild & wi
 nd_ne = r1_expandout_ind_all_ych %>% 
   mutate(country = substr(childid, 1, 2)) %>% 
   mutate(clustid = paste(country, clustid, sep = "_")) %>% 
-  mutate(chldeth = if_else(is.na(chldeth), chldeth, paste(country, chldeth, sep = "_"))) %>% 
-  mutate(chldrel = if_else(is.na(chldrel), chldrel, paste(country, chldrel, sep = "_"))) %>% 
-  mutate(region = if_else(is.na(region), as.character(region), paste(country, region, sep = "_"))) %>% 
-  mutate(exposure = case_when(
-    badevent == 1 & phychnge == 1 ~ 1,
-    badevent == 0 ~ 0,
-    TRUE ~ NA_real_
-  )) %>% 
-  mutate(agechild_centered = agechild - mean(agechild, na.rm = TRUE)) %>% 
-  mutate(wi_centered = wi - mean(wi, na.rm = TRUE)) %>% 
-  mutate(
-    round = as.factor(round),
-    country = as.factor(country),
-    childid = as.factor(childid),
-    commid = as.factor(commid),
-    badevent = as.factor(badevent),
-    phychnge = as.factor(phychnge),
-    exposure = as.factor(exposure),
-    vax_status = as.factor(vax_status),
-    vax_type = as.factor(vax_type),
-    chldeth = as.factor(chldeth),
-    region = as.factor(region),
-    sex = as.factor(sex),
-    caredep = as.factor(caredep),
-    chldrel = as.factor(chldrel),
-    clustid = as.factor(clustid)) %>% 
-  filter(!is.na(vax_status)) %>%
-  filter(!is.na(exposure)) %>% 
-  select(-X) %>% 
-  select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, phychnge, badevent, wi_centered, agechild_centered, chldeth, chldrel, everything())
-
-#######NEW CODE CHUNK TO TEST ANTENATAL
-test0 = r1_expandout_ind_all_ych %>% 
-  mutate(country = substr(childid, 1, 2)) %>% 
-  mutate(clustid = paste(country, clustid, sep = "_")) %>% 
-  mutate(chldeth = if_else(is.na(chldeth), chldeth, paste(country, chldeth, sep = "_"))) %>% 
-  mutate(chldrel = if_else(is.na(chldrel), chldrel, paste(country, chldrel, sep = "_"))) %>% 
   mutate(region = if_else(is.na(region), as.character(region), paste(country, region, sep = "_"))) %>% 
   mutate(exposure = case_when(
     badevent == 1 & phychnge == 1 ~ 1,
@@ -201,60 +125,18 @@ test0 = r1_expandout_ind_all_ych %>%
     sex = as.factor(sex),
     vax_type = as.factor(vax_type),
     vax_status = as.factor(vax_status), 
-    chldeth = as.factor(chldeth),
     region = as.factor(region),
     caredep = as.factor(caredep),
-    chldrel = as.factor(chldrel),
     clustid = as.factor(clustid)) %>%
   filter(!is.na(exposure)) %>% 
   select(-X) %>% 
-  select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, phychnge, badevent, wi_centered, agechild_centered, chldeth, chldrel, everything())
-########
+  select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, antnata, phychnge, badevent, wi_centered, agechild_centered, everything())
 
 #create df to examine effect of exposure to natural disaster (ND) v. other bad event (OBE) AND no event (NE); 
 #convert categorical variables to factors; mean center agechild & wi
 nd_obe_ne = r1_expandout_ind_all_ych %>% 
   mutate(country = substr(childid, 1, 2)) %>% 
   mutate(clustid = paste(country, clustid, sep = "_")) %>% 
-  mutate(chldeth = if_else(is.na(chldeth), chldeth, paste(country, chldeth, sep = "_"))) %>% 
-  mutate(chldrel = if_else(is.na(chldrel), chldrel, paste(country, chldrel, sep = "_"))) %>% 
-  mutate(region = if_else(is.na(region), as.character(region), paste(country, region, sep = "_"))) %>% 
-  mutate(exposure = case_when(
-    is.na(badevent) ~ NA_real_,
-    badevent == 1 & phychnge == 1 ~ 1,
-    badevent == 1 & (phychnge == 0 | is.na(phychnge)) ~ 0,
-    badevent == 0 & is.na(phychnge) ~ 0,
-    TRUE ~ NA_real_
-  )) %>% 
-  mutate(agechild_centered = agechild - mean(agechild, na.rm = TRUE)) %>% 
-  mutate(wi_centered = wi - mean(wi, na.rm = TRUE)) %>% 
-  mutate(
-    round = as.factor(round),
-    country = as.factor(country),
-    childid = as.factor(childid),
-    commid = as.factor(commid),
-    badevent = as.factor(badevent),
-    phychnge = as.factor(phychnge),
-    exposure = as.factor(exposure),
-    sex = as.factor(sex),
-    vax_status = as.factor(vax_status),
-    vax_type = as.factor(vax_type),
-    chldeth = as.factor(chldeth),
-    region = as.factor(region),
-    caredep = as.factor(caredep),
-    chldrel = as.factor(chldrel),
-    clustid = as.factor(clustid)) %>%
-  filter(!is.na(vax_status)) %>%
-  filter(!is.na(exposure)) %>% 
-  select(-X) %>% 
-  select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, phychnge, badevent, wi_centered, agechild_centered, chldeth, chldrel, everything())
-
-#######NEW CODE CHUNK TO TEST ANTENATAL
-test = r1_expandout_ind_all_ych %>% 
-  mutate(country = substr(childid, 1, 2)) %>% 
-  mutate(clustid = paste(country, clustid, sep = "_")) %>% 
-  mutate(chldeth = if_else(is.na(chldeth), chldeth, paste(country, chldeth, sep = "_"))) %>% 
-  mutate(chldrel = if_else(is.na(chldrel), chldrel, paste(country, chldrel, sep = "_"))) %>% 
   mutate(region = if_else(is.na(region), as.character(region), paste(country, region, sep = "_"))) %>% 
   mutate(exposure = case_when(
     is.na(badevent) ~ NA_real_,
@@ -276,23 +158,31 @@ test = r1_expandout_ind_all_ych %>%
     sex = as.factor(sex),
     vax_type = as.factor(vax_type),
     vax_status = as.factor(vax_status), 
-    chldeth = as.factor(chldeth),
     region = as.factor(region),
     caredep = as.factor(caredep),
-    chldrel = as.factor(chldrel),
     clustid = as.factor(clustid)) %>%
   filter(!is.na(exposure)) %>% 
   select(-X) %>% 
-  select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, phychnge, badevent, wi_centered, agechild_centered, chldeth, chldrel, everything())
-########
+  select(round, childid, country, region, clustid, commid, exposure, vax_status, vax_type, antnata, phychnge, badevent, wi_centered, agechild_centered, everything())
 
 #save r1 nd_ne_obe to file
 write.csv(nd_obe_ne, "./code/cleaning/ych_main/data_ych/r1_nd_obe_ne.csv")
-write.csv(test, "./code/cleaning/ych_main/data_ych/r1_test.csv")
 
 #create dfs for analysis
-et_test = test %>% 
-  filter(country == "et") %>% 
+
+#remove polio for nd_obe bc not included for all countries in r1
+nopolio_nd_obe = nd_obe %>% 
+  filter(vax_type != "vax_polio") %>% 
+  mutate(vax_type = fct_relevel(vax_type, "vax_inject")) #relevel vax_type
+
+#remove polio for nd_ne bc not included for all countries in r1
+nopolio_nd_ne = nd_ne %>% 
+  filter(vax_type != "vax_polio") %>% 
+  mutate(vax_type = fct_relevel(vax_type, "vax_inject"))  
+
+#remove polio for nd_obe_ne bc not included for all countries in r1
+nopolio_nd_obe_ne = nd_obe_ne %>% 
+  filter(vax_type != "vax_polio") %>% 
   mutate(vax_type = fct_relevel(vax_type, "vax_inject")) 
 
 et_nd_obe = nd_obe %>% 
@@ -307,10 +197,6 @@ et_nd_obe_ne = nd_obe_ne %>%
   filter(country == "et") %>% 
   mutate(vax_type = fct_relevel(vax_type, "vax_inject")) 
 
-in_test = test %>% 
-  filter(country == "in") %>% 
-  mutate(vax_type = fct_relevel(vax_type, "vax_inject")) 
-
 in_nd_obe = nd_obe %>% 
   filter(country == "in") %>% 
   mutate(vax_type = fct_relevel(vax_type, "vax_inject")) 
@@ -321,10 +207,6 @@ in_nd_ne = nd_ne %>%
 
 in_nd_obe_ne = nd_obe_ne %>% 
   filter(country == "in") %>% 
-  mutate(vax_type = fct_relevel(vax_type, "vax_inject")) 
-
-vi_test = test %>% 
-  filter(country == "vt") %>% 
   mutate(vax_type = fct_relevel(vax_type, "vax_inject")) 
 
 vi_nd_obe = nd_obe %>% 
@@ -584,11 +466,6 @@ ggplot(clean_data, aes(x = wi, fill = factor(vax_status))) +
 
 #nd_obe
 
-#remove polio bc not included for all countries in r1
-nopolio_nd_obe = nd_obe %>% 
-  filter(vax_type != "vax_polio") %>% 
-  mutate(vax_type = fct_relevel(vax_type, "vax_inject")) #relevel vax_type
-
 model_a <- glmer(vax_status ~ exposure + vax_type + wi_centered + agechild_centered + 
                    (1 | country/region/commid/childid) ,
                  data = nopolio_nd_obe, family = binomial, nAGQ = 1, 
@@ -611,11 +488,6 @@ testOutliers(sim_res)
 
 #nd_ne
 
-#remove polio bc not included for all countries in r1
-nopolio_nd_ne = nd_ne %>% 
-  filter(vax_type != "vax_polio") %>% 
-  mutate(vax_type = fct_relevel(vax_type, "vax_inject"))  
-
 model_b <- glmer(vax_status ~ exposure + vax_type + wi_centered + agechild_centered +
                    (1 | country/region/commid/childid) ,
                  data = nopolio_nd_ne, family = binomial, nAGQ = 1, 
@@ -633,11 +505,6 @@ testDispersion(sim_res)
 testOutliers(sim_res)
 
 #nd_ne_obe
-
-#remove polio bc not included for all countries in r1
-nopolio_nd_obe_ne = nd_obe_ne %>% 
-  filter(vax_type != "vax_polio") %>% 
-  mutate(vax_type = fct_relevel(vax_type, "vax_inject"))  
 
 model_c <- glmer(vax_status ~ exposure + vax_type + wi_centered + agechild_centered +
                    (1 | country/region/clustid/childid) ,
@@ -660,40 +527,8 @@ testOutliers(sim_res)
 
 #nd_obe
 
-####NEW CODE CHUNK TO TEST ANTENATAL
-test00 = test00 %>% 
-  filter(vax_type != "vax_polio") %>% 
-  mutate(vax_type = fct_relevel(vax_type, "vax_inject"))  
-test_model <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered +
-                      (1 | region/clustid/childid),
-                    data = test00, family = binomial, nAGQ = 1, 
-                    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
-summary(test_model)
-sim_res <- simulateResiduals(test_model)
-plot(sim_res)
-testDispersion(sim_res)
-testOutliers(sim_res)
-avg_comparisons(test_model, variables = "exposure", by = "vax_type")
-plot_comparisons(test_model, variables = "exposure", by = "vax_type") +
-  labs(y = "Marginal Effect", x = "Vaccine Type") +
-  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
-                              "vax_bcg" = "BCG", 
-                              "vax_measles" = "Measles")) +
-  theme(text = element_text(size = 14)) +
-  aes(color = vax_type) + 
-  scale_color_brewer(type = "qual", palette = "Dark2")
-plot_predictions(test_model, by = c("vax_type", "exposure")) +
-  labs(y = "Predicted Probability", x = "Vaccine Type") +
-  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
-                              "vax_bcg" = "BCG", 
-                              "vax_measles" = "Measles")) +
-  theme(text = element_text(size = 14)) +
-  aes(color = exposure) + 
-  scale_color_brewer(type = "qual", palette = "Set2")
-########
-
 model_d <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered + 
-                   (1 | country/region/clustid/childid) ,
+                   (1 | region/clustid/childid),
                  data = nopolio_nd_obe, family = binomial, nAGQ = 1, 
                  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
 
@@ -720,6 +555,16 @@ avg_comparisons(model_d, variables = "exposure")
 #check for heterogeneity to see if effect of X on Y depends on Moderator 
 avg_comparisons(model_d, variables = "exposure", by = "vax_type")
 
+#plot marginal effects 
+plot_comparisons(model_d, variables = "exposure", by = "vax_type") +
+  labs(y = "Marginal Effect", x = "Vaccine Type") +
+  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
+                              "vax_bcg" = "BCG", 
+                              "vax_measles" = "Measles")) +
+  theme(text = element_text(size = 14)) +
+  aes(color = vax_type) + 
+  scale_color_brewer(type = "qual", palette = "Dark2")
+
 #are the differences btw moderator groups statistically significant? 
 avg_comparisons(model_d,
                 variables = "exposure",
@@ -732,40 +577,8 @@ avg_slopes(model_d, variables = "wi_centered")
 
 #nd_ne
 
-####NEW CODE CHUNK TO TEST ANTENATAL
-test0 = test0 %>% 
-  filter(vax_type != "vax_polio") %>% 
-  mutate(vax_type = fct_relevel(vax_type, "vax_inject"))  
-test_model <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered +
-                      (1 | country/region/clustid/childid),
-                    data = test0, family = binomial, nAGQ = 1, 
-                    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
-summary(test_model)
-sim_res <- simulateResiduals(test_model)
-plot(sim_res)
-testDispersion(sim_res)
-testOutliers(sim_res)
-avg_comparisons(test_model, variables = "exposure", by = "vax_type")
-plot_comparisons(test_model, variables = "exposure", by = "vax_type") +
-  labs(y = "Marginal Effect", x = "Vaccine Type") +
-  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
-                              "vax_bcg" = "BCG", 
-                              "vax_measles" = "Measles")) +
-  theme(text = element_text(size = 14)) +
-  aes(color = vax_type) + 
-  scale_color_brewer(type = "qual", palette = "Dark2")
-plot_predictions(test_model, by = c("vax_type", "exposure")) +
-  labs(y = "Predicted Probability", x = "Vaccine Type") +
-  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
-                              "vax_bcg" = "BCG", 
-                              "vax_measles" = "Measles")) +
-  theme(text = element_text(size = 14)) +
-  aes(color = exposure) + 
-  scale_color_brewer(type = "qual", palette = "Set2")
-########
-
 model_e <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered +
-                   (1 | country/region/clustid/childid),
+                   (1 | country/clustid/childid),
                  data = nopolio_nd_ne, family = binomial, nAGQ = 1, 
                  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
 
@@ -794,6 +607,16 @@ avg_comparisons(model_e, variables = "exposure")
 #check for heterogeneity to see if effect of X on Y depends on Moderator 
 avg_comparisons(model_e, variables = "exposure", by = "vax_type")
 
+#plot marginal effects 
+plot_comparisons(model_e, variables = "exposure", by = "vax_type") +
+  labs(y = "Marginal Effect", x = "Vaccine Type") +
+  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
+                              "vax_bcg" = "BCG", 
+                              "vax_measles" = "Measles")) +
+  theme(text = element_text(size = 14)) +
+  aes(color = vax_type) + 
+  scale_color_brewer(type = "qual", palette = "Dark2")
+
 #are the differences btw moderator groups statistically significant? 
 avg_comparisons(model_e,
                 variables = "exposure",
@@ -806,42 +629,8 @@ avg_slopes(model_e, variables = "wi_centered")
 
 #nd_ne_obe
 
-####NEW CODE CHUNK TO TEST ANTENATAL
-test = test %>% 
-  filter(vax_type != "vax_polio") %>% 
-  mutate(vax_type = fct_relevel(vax_type, "vax_inject"))  
-test_model <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered +
-                   (1 | country/region/clustid/childid),
-                 data = test, family = binomial, nAGQ = 1, 
-                 control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
-summary(test_model) 
-sim_res <- simulateResiduals(test_model)
-plot(sim_res)
-testDispersion(sim_res)
-testOutliers(sim_res)
-avg_comparisons(test_model, variables = "exposure", by = "vax_type")
-plot_comparisons(test_model, variables = "exposure", by = "vax_type") +
-  labs(y = "Marginal Effect", x = "Vaccine Type") +
-  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
-                              "vax_bcg" = "BCG", 
-                              "vax_measles" = "Measles")) +
-  theme(text = element_text(size = 14)) +
-  aes(color = vax_type) + 
-  scale_color_brewer(type = "qual", palette = "Dark2")
-plot_predictions(test_model, by = c("vax_type", "exposure")) +
-  labs(y = "Predicted Probability", x = "Vaccine Type") +
-  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
-                              "vax_bcg" = "BCG", 
-                              "vax_measles" = "Measles")) +
-  theme(text = element_text(size = 14)) +
-  aes(color = exposure) + 
-  scale_color_brewer(type = "qual", palette = "Set2")
-avg_slopes(test_model, variables = "agechild_centered")
-avg_slopes(test_model, variables = "wi_centered")
-########
-
 model_f <- glmer(vax_status ~ exposure * vax_type + wi_centered + agechild_centered +
-                   (1 | country/region/clustid/childid),
+                   (1 | country/clustid/childid),
                  data = nopolio_nd_obe_ne, family = binomial, nAGQ = 1, 
                  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
 
@@ -900,12 +689,11 @@ ggplot(comps, aes(y = vax_type, x = estimate)) +
 avg_comparisons(model_f,
                 variables = "exposure",
                 by = "vax_type",
-                hypothesis = "b3 - b2 = 0")
+                hypothesis = "b3 - b1 = 0")
 
 #get marginal effects for covariates
 avg_slopes(model_f, variables = "agechild_centered")
 avg_slopes(model_f, variables = "wi_centered")
-
 
 #calculate the combined effects for interaction
 
@@ -922,7 +710,7 @@ ee_interaction_measles <-
 #for the reference category
 ee_reference <- ee_exposure1
 
-#for vax_typevax_inject
+#for vax_typevax_bcg
 ee_bcg <- ee_exposure1 + ee_interaction_bcg
 
 #for vax_typevax_measles
@@ -934,6 +722,60 @@ interaction_effects <- data.frame(
   Combined_Effect = c(ee_reference, ee_bcg, ee_measles)
 )
 print(interaction_effects)
+
+#run nd_obe_ne model with polio for in & pe
+polio_nd_obe_ne = nd_obe_ne %>% 
+  filter(country == "in"| country == "pe") %>% 
+  mutate(vax_type = fct_relevel(vax_type, "vax_inject"))
+
+model_polio <- glmer(vax_status ~ exposure * country * vax_type + wi_centered + agechild_centered +
+                   (1 | country/region/clustid/childid),
+                 data = polio_nd_obe_ne, family = binomial, nAGQ = 1, 
+                 control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 10000)))
+#AIC to check model fit
+AIC(model_polio)
+
+#DHARMa for residual diagnostics and model fit checks
+sim_res <- simulateResiduals(model_polio)
+plot(sim_res)
+testDispersion(sim_res)
+testOutliers(sim_res)
+
+#compute average predicted outcome for each combination of exposure & moderator 
+avg_predictions(model_polio, by = c("exposure", "vax_type"))
+
+#compute average counterfactual comparison
+avg_comparisons(model_polio, variables = "exposure")
+
+#Find average marginal effects, i.e. the comparison between exposure = 1 vs exposure = 0)
+avg_comparisons(model_polio, variables = "exposure", by = "vax_type")
+
+#plot marginal effects 
+plot_comparisons(model_polio, variables = "exposure", by = "vax_type") +
+  labs(y = "Marginal Effect", x = "Vaccine Type") +
+  scale_x_discrete(labels = c("vax_inject" = "≥ 2 doses of antenatal tetanus", 
+                              "vax_bcg" = "BCG", 
+                              "vax_measles" = "Measles", 
+                              "vax_polio" = "Polio",)) +
+  theme(text = element_text(size = 14)) +
+  aes(color = vax_type) + 
+  scale_color_brewer(type = "qual", palette = "Dark2")
+
+#forest plot marginal effects
+comps <- avg_comparisons(model_polio, variables = "exposure", by = "vax_type")
+ggplot(comps, aes(y = vax_type, x = estimate)) +
+  geom_point() +
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high)) 
+
+#are the differences btw moderator groups statistically significant? 
+avg_comparisons(model_polio,
+                variables = "exposure",
+                by = "vax_type",
+                hypothesis = "b3 - b2 = 0")
+
+#get marginal effects for covariates
+avg_slopes(model_polio, variables = "agechild_centered")
+avg_slopes(model_polio, variables = "wi_centered")
 
 #--------------------------
 #model individual countries with all vaccinations together: nd_obe/nd_ne/nd_obe/ne

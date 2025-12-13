@@ -1,6 +1,6 @@
 # File: India, Andra Pradesh - main survey with younger children round 1 & 2 
 # Author: Brittany Shea
-# Date: 1-24-25
+# Date: 12-11-25
 
 #-------------------------
 
@@ -34,11 +34,12 @@ r2_in_ych = read_dta("./data/raw/ych_main/r2_in_ych.dta")
 #Round 1
 #-------------------------
 
-#clean round 1 child data; filtered timelive >= 3
+#clean round 1 child data; filtered timelive >= 3; if antnata = 0, vax_inject = 0; 
+#filter agechild for measles
 
 sub1_r1_in_ych = r1_in_ych %>% 
   select(agechild, childid, commid, clustid, region, timelive, bio1, relcare, head,
-         longterm, chldeth, chldrel, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, inject, bcg, 
+         longterm, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, inject, bcg, 
          measles, polio) %>% 
   mutate(round = 1) %>%
   mutate(across(where(is.character), tolower)) %>%
@@ -74,19 +75,6 @@ sub1_r1_in_ych = r1_in_ych %>%
   mutate(badevent = ifelse(badevent == 1, 1,0)) %>%
   mutate(head = as.numeric(head)) %>% 
   mutate(caredep = as.numeric(caredep)) %>%
-  mutate(chldeth = case_when(
-    chldeth == 21 ~ "sc",
-    chldeth == 22 ~ "st",
-    chldeth == 23 ~ "bc",
-    chldeth == 24 ~ "oc",
-    TRUE ~ as.character(chldeth))) %>% 
-  mutate(chldrel = case_when(
-    chldrel == 1 ~ "christian",
-    chldrel == 2 ~ "muslim",
-    chldrel == 3 ~ "buddhist",
-    chldrel == 4 ~ "hindu",
-    chldrel == 14 ~ "none",
-    TRUE ~ as.character(chldrel))) %>% 
   filter(!is.na(vax_inject) | !is.na(vax_bcg) | !is.na(vax_measles) | !is.na(vax_polio)) %>% 
   pivot_longer(cols = starts_with("vax"), 
                names_to = "vax_type", 
@@ -95,19 +83,15 @@ sub1_r1_in_ych = r1_in_ych %>%
 #save sub1_r1_in_ych to file
 write.csv(sub1_r1_in_ych, "./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_in_ych.csv")
 
-sub2_r1_in_ych <- sub1_r1_in_ych %>% 
-  select(childid, round, commid, clustid, agechild, vax_type, vax_status, phychnge, badevent, wi, chldeth, chldrel, 
-         longterm, caredep, relcare, head)
-
 #-------------------------
 #Round 2
 #-------------------------
 
 #clean round 2 child data
 sub1_r2_in_ych = r2_in_ych %>% 
-  select(childid, agechild, clustid, commid, region, biomum, primum, wi, carelive, chldeth,
-         longterm, event24, event25, event26, event27, event28, event29, event30, 
-         event31, bcg, measles, dpt, opv, hib) %>%
+  select(childid, agechild, clustid, commid, region, id6, id9, biomum, primum, wi, carelive, 
+         mumlive, longliv, pelngliv, longterm, event24, event25, event26, event27, 
+         event28, event29, event30, event31, bcg, measles, dpt, opv, hib) %>%
   mutate(round = 2) %>%
  filter(carelive == -66 | carelive >= 4) %>%
   mutate(across(where(is.character), tolower)) %>%

@@ -1,6 +1,6 @@
 # File: Peru main survey with younger children round 1 & 2 
 # Author: Brittany Shea
-# Date: 1-22-25
+# Date: 12-11-25
 
 #-------------------------
 
@@ -34,10 +34,12 @@ r2_pe_ych = read_dta("./data/raw/ych_main/r2_pe_ych.dta")
 #Round 1
 #-------------------------
 
-#clean round 1 child data; filtered timelive >= 3
+#clean round 1 child data; filtered timelive >= 3; if antnata = 0, vax_inject = 0; 
+#filter agechild for measles
+
 sub1_r1_pe_ych = r1_pe_ych %>% 
   select(agechild, childid, placeid, clustid, region, timelive, bio1, relcare, head, 
-         longterm, chldeth, chldrel, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, inject, bcg, polio, 
+         longterm, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, inject, bcg, polio, 
          measles) %>% 
   mutate(round = 1) %>%
   mutate(measles = ifelse(agechild <= 12, NA_real_, measles)) %>%
@@ -72,21 +74,6 @@ sub1_r1_pe_ych = r1_pe_ych %>%
   mutate(bio1 = as.numeric(bio1)) %>% 
   rename(biomum = bio1) %>% 
   mutate(biomum = ifelse(biomum == 1, 1,0)) %>%
-  mutate(chldrel = case_when(
-    chldrel == 4 ~ "hindu",
-    chldrel == 5 ~ "catholic",
-    chldrel == 9 ~ "evangelist",
-    chldrel == 10 ~ "mormon",
-    chldrel == 14 ~ "none",
-    chldrel == 15 ~ "other",
-    TRUE ~ as.character(chldrel))) %>% 
-  mutate(chldeth = case_when(
-    chldeth == 31 ~ "white",
-    chldeth == 32 ~ "mestizo",
-    chldeth == 33 ~ "native amazon",
-    chldeth == 34 ~ "negro",
-    chldeth == 35 ~ "asiatic",
-    TRUE ~ as.character(chldeth))) %>% 
   filter(!is.na(vax_inject) | !is.na(vax_bcg) | !is.na(vax_measles) | !is.na(vax_polio)) %>% 
   pivot_longer(cols = starts_with("vax"), 
                names_to = "vax_type", 
@@ -96,10 +83,6 @@ sub1_r1_pe_ych$childid <- tolower(sub1_r1_pe_ych$childid)
 
 #save sub1_r1_pe_ych to file
 write.csv(sub1_r1_pe_ych, "./code/cleaning/ych_main/data_ych/r1individualexposure_r1outcome_pe_ych.csv")
-
-sub2_r1_pe_ych <- sub1_r1_pe_ych %>% 
-  select(childid, round, commid, clustid, agechild, vax_type, vax_status, wi, 
-         chldeth, chldrel, longterm, caredep, relcare, head, badevent, phychnge)
 
 #-------------------------
 # Round 2
