@@ -33,11 +33,14 @@ r2_vt_ych = read_dta("./data/raw/ych_main/r2_vt_ych.dta")
 #Round 1
 #-------------------------
 #clean round 1 child data; filtered timelive >= 3; if antnata = 0, vax_inject = 0; 
-#filter agechild for measles
+#NAs for measles response if agechild <= 9; filtered if at least 1 vax response is not NA
 
+#measles_under10 = sub1_r1_vt_ych %>% 
+# filter(agechild <= 9)
+  
 sub1_r1_vt_ych = r1_vt_ych %>% 
   select(agechild, CHILDID, COMMID, CLUSTID, REGION, TIMELIVE, BIO1, HEAD,
-         LONGTERM, SEX, caredep, RELCARE, BADEVENT, WORSEVNT, PHYCHNGE, wi, ANTNATA, INJECT, BCG, 
+         LONGTERM, SEX, caredep, RELCARE, BADEVENT, WORSEVNT, PHYCHNGE, wi, ANTNATA, BPLACE, INJECT, BCG, 
          MEASLES) %>% 
   mutate(round = 1) %>%
   mutate(across(where(is.character), tolower)) %>%

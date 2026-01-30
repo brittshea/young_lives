@@ -34,17 +34,20 @@ r2_et_ych = read_dta("./data/raw/ych_main/r2_et_ych.dta")
 #-------------------------
 
 #clean round 1 child data; filter timelive >= 3; if antnata = 0, vax_inject = 0; 
-#filter agechild for measles
+#NAs for measles response if agechild <= 9; filtered if at least 1 vax response is not NA
+
+#measles_under10 = sub1_r1_et_ych %>% 
+ # filter(agechild <= 9)
 
 sub1_r1_et_ych = r1_et_ych %>% 
   select(agechild, childid, commid, clustid, region, timelive, bio1, relcare, head,
-         longterm, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, inject, bcg, 
+         longterm, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, bplace, inject, bcg, 
          measles) %>% 
   mutate(round = 1) %>%
   mutate(across(where(is.character), tolower)) %>%
   rename_with(tolower) %>% 
   mutate(measles = ifelse(agechild <= 9, NA_real_, measles)) %>%
-  filter(timelive >= 3) %>% 
+  filter(timelive >= 3) %>%
   mutate(sex = as.numeric(sex)) %>% 
   mutate(sex = ifelse(sex == 1, 1,0)) %>% #0=female, 1=male
   mutate(antnata = as.numeric(antnata)) %>% 
@@ -82,7 +85,7 @@ write.csv(sub1_r1_et_ych, "./code/cleaning/ych_main/data_ych/r1individualexposur
 #sub-analysis to look at other bad events (obe)
 
 obe_r1_et_ych <- r1_et_ych %>% 
-  select(childid, commid, clustid, region, agechild, wi, sex, timelive, badevent, phychnge,
+  select(childid, commid, clustid, region, agechild, wi, timelive, badevent, phychnge,
         hhfood, hhlstck, hhcrps, hhlstl, hhcstl, hhdeath, hhjob,
         hhill, hhcrime, hhdiv, hhbirth, edu, hhmove, hhoth, inject, bcg, measles) %>% 
   mutate(round = 1) %>%
@@ -90,7 +93,6 @@ obe_r1_et_ych <- r1_et_ych %>%
   rename_with(tolower) %>% 
   mutate(measles = ifelse(agechild <= 9, NA_real_, measles)) %>%
   filter(timelive >= 3) %>% 
-  mutate(sex = ifelse(sex == 1, 1,0)) %>% 
   rename(vax_inject = inject) %>% 
   mutate(vax_inject = ifelse(vax_inject == 1, 1,0)) %>% 
   rename(vax_bcg = bcg) %>% 
@@ -138,7 +140,7 @@ obe_r1_et_ych %>%
   ) %>%
   ggplot(aes(x = column, y = pct_childid)) +
   geom_col(fill = "royalblue", alpha = 0.7) +
-  labs(x = "Type of Bad Event", y = "Percentage of Children (%)")
+  labs(x = "Type of Bad Event", y = "Percentage of Mother/Child Pairs (%)")
 
 #plot count of individuals by obe combinations
 obe_plot = obe_r1_et_ych %>%

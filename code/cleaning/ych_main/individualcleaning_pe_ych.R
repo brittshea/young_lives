@@ -35,11 +35,14 @@ r2_pe_ych = read_dta("./data/raw/ych_main/r2_pe_ych.dta")
 #-------------------------
 
 #clean round 1 child data; filtered timelive >= 3; if antnata = 0, vax_inject = 0; 
-#filter agechild for measles
+#NAs for measles response if agechild <= 12; filtered if at least 1 vax response is not NA
+
+#measles_under13 = sub1_r1_pe_ych %>% 
+ # filter(agechild <= 12)
 
 sub1_r1_pe_ych = r1_pe_ych %>% 
   select(agechild, childid, placeid, clustid, region, timelive, bio1, relcare, head, 
-         longterm, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, inject, bcg, polio, 
+         longterm, sex, caredep, badevent, phychnge, worsevnt, wi, antnata, bplace, inject, bcg, polio, 
          measles) %>% 
   mutate(round = 1) %>%
   mutate(measles = ifelse(agechild <= 12, NA_real_, measles)) %>%
@@ -90,11 +93,11 @@ write.csv(sub1_r1_pe_ych, "./code/cleaning/ych_main/data_ych/r1individualexposur
 
 #clean round 2 child data
 sub1_r2_pe_ych = r2_pe_ych %>% 
-  select(childid, agechild, clustid, region, placeid, primum, wi, chldeth, carelive,
+  select(childid, agechild, clustid, region, placeid, biomum, primum, wi, longliv,
          longterm, event24, event25, event26, event27, event28, event29, event30, 
          event31, event14, event58, event59, bcg, measles, dpt, opv, hib, pehvb) %>%
   mutate(round = 2) %>%
-  filter(carelive == -66 | carelive >= 4) %>%
+  filter(longliv >= 4) %>%
   mutate(bcg = as.numeric(bcg)) %>% 
   rename(vax_bcg = bcg) %>% 
   mutate(measles = as.numeric(measles)) %>% 
@@ -118,6 +121,3 @@ sub1_r2_pe_ych$childid <- tolower(sub1_r2_pe_ych$childid)
 
 #save sub1_r2_in_ych to file
 write.csv(sub1_r2_pe_ych, "./code/cleaning/ych_main/data_ych/r2individualexposure_r2outcome_pe_ych.csv")
-
-sub2_r2_pe_ych <- sub1_r2_pe_ych %>% 
-  select(childid, round, commid, clustid, region, agechild, vax_type, vax_status, wi, longterm)
